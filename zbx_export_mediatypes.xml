@@ -1,0 +1,195 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<zabbix_export>
+    <version>5.2</version>
+    <date>2022-06-17T14:17:03Z</date>
+    <media_types>
+        <media_type>
+            <name>Hipersend</name>
+            <type>WEBHOOK</type>
+            <parameters>
+                <parameter>
+                    <name>Api</name>
+                    <value>&lt;YOUR API HERE&gt;</value>
+                </parameter>
+                <parameter>
+                    <name>Message</name>
+                    <value>{ALERT.MESSAGE}</value>
+                </parameter>
+                <parameter>
+                    <name>ParseMode</name>
+                    <value/>
+                </parameter>
+                <parameter>
+                    <name>Secret</name>
+                    <value>&lt;YOUR SECRET HERE&gt;</value>
+                </parameter>
+                <parameter>
+                    <name>Subject</name>
+                    <value>{ALERT.SUBJECT}</value>
+                </parameter>
+                <parameter>
+                    <name>To</name>
+                    <value>{ALERT.SENDTO}</value>
+                </parameter>
+            </parameters>
+            <script>var Hipersend = {
+    api: null,
+    secret: null,
+    to: null,
+    message: null,
+    proxy: null,
+    parse_mode: null,
+
+    sendMessage: function() {
+        var params = {
+            clientApi: Hipersend.api,
+            clientSecret: Hipersend.secret,
+            phone: Hipersend.to,
+            message: Hipersend.message,
+            disable_web_page_preview: true,
+            disable_notification: false
+        },
+        data,
+        response,
+        request = new CurlHttpRequest(),
+        url = 'https://myhs.app/messages/sendMessage';
+
+        const isGroup = Hipersend.to.length &gt; 17;
+        if(isGroup){
+            url = url + &quot;Group&quot;;
+        }
+        
+        request.AddHeader('Content-Type: application/json');
+
+        data = JSON.stringify(params);
+
+        Zabbix.Log(4, '[Hipersend Webhook] URL: ' + url.replace(Hipersend.api, '&lt;API&gt;'));
+        Zabbix.Log(4, '[Hipersend Webhook] params: ' + data);
+        response = request.Post(url, data);
+        Zabbix.Log(4, '[Hipersend Webhook] HTTP code: ' + request.Status());
+
+        try {
+            response = JSON.parse(response);
+        }
+        catch (error) {
+            response = null;
+        }
+
+        if (request.Status() !== 200) {
+            if (typeof response.description === 'string') {
+                throw response.description;
+            }
+            else {
+                throw 'Unknown error. Check debug log for more information.'
+            }
+        }
+    }
+}
+
+try {
+    var params = JSON.parse(value);
+
+    if (typeof params.Api === 'undefined') {
+        throw 'Incorrect value is given for parameter &quot;Api&quot;: parameter is missing';
+    }
+    if (typeof params.Secret === 'undefined') {
+        throw 'Incorrect value is given for parameter &quot;Secret&quot;: parameter is missing';
+    }
+
+    Hipersend.api = params.Api;
+    Hipersend.secret = params.Secret;
+
+    if (params.HTTPProxy) {
+        Hipersend.proxy = params.HTTPProxy;
+    } 
+
+    if (['Markdown', 'HTML', 'MarkdownV2'].indexOf(params.ParseMode) !== -1) {
+        Hipersend.parse_mode = params.ParseMode;
+    }
+
+    Hipersend.to = params.To;
+    Hipersend.message = params.Subject + '\n' + params.Message;
+    Hipersend.sendMessage();
+
+    return 'OK';
+}
+catch (error) {
+    Zabbix.Log(4, '[Hipersend Webhook] notification failed: ' + error);
+    throw 'Sending failed: ' + error + '.';
+}</script>
+            <timeout>10s</timeout>
+            <description>Link: https://github.com/hipersend/HiperSend---Notifica-es-Zabbix-via-WhatsApp
+
+REQUISITOS
+
+* Ter uma instância do WhatsApp na Hipersend
+* Ter API e SECRET dessa instância
+
+PASSO A PASSO
+
+* Adicionar a API e SECRET nos parâmetros do template
+
+PRONTO PARA USAR!
+
+</description>
+            <message_templates>
+                <message_template>
+                    <event_source>TRIGGERS</event_source>
+                    <operation_mode>PROBLEM</operation_mode>
+                    <subject>Problem: {EVENT.NAME}</subject>
+                    <message>Problem started at {EVENT.TIME} on {EVENT.DATE}
+Problem name: {EVENT.NAME}
+Host: {HOST.NAME}
+Severity: {EVENT.SEVERITY}
+Operational data: {EVENT.OPDATA}
+Original problem ID: {EVENT.ID}
+{TRIGGER.URL}</message>
+                </message_template>
+                <message_template>
+                    <event_source>TRIGGERS</event_source>
+                    <operation_mode>RECOVERY</operation_mode>
+                    <subject>Resolved in {EVENT.DURATION}: {EVENT.NAME}</subject>
+                    <message>Problem has been resolved in {EVENT.DURATION} at {EVENT.RECOVERY.TIME} on {EVENT.RECOVERY.DATE}
+Problem name: {EVENT.NAME}
+Host: {HOST.NAME}
+Severity: {EVENT.SEVERITY}
+Original problem ID: {EVENT.ID}
+{TRIGGER.URL}</message>
+                </message_template>
+                <message_template>
+                    <event_source>TRIGGERS</event_source>
+                    <operation_mode>UPDATE</operation_mode>
+                    <subject>Updated problem: {EVENT.NAME}</subject>
+                    <message>{USER.FULLNAME} {EVENT.UPDATE.ACTION} problem at {EVENT.UPDATE.DATE} {EVENT.UPDATE.TIME}.
+{EVENT.UPDATE.MESSAGE}
+
+Current problem status is {EVENT.STATUS}, acknowledged: {EVENT.ACK.STATUS}.</message>
+                </message_template>
+                <message_template>
+                    <event_source>DISCOVERY</event_source>
+                    <operation_mode>PROBLEM</operation_mode>
+                    <subject>Discovery: {DISCOVERY.DEVICE.STATUS} {DISCOVERY.DEVICE.IPADDRESS}</subject>
+                    <message>Discovery rule: {DISCOVERY.RULE.NAME}
+
+Device IP: {DISCOVERY.DEVICE.IPADDRESS}
+Device DNS: {DISCOVERY.DEVICE.DNS}
+Device status: {DISCOVERY.DEVICE.STATUS}
+Device uptime: {DISCOVERY.DEVICE.UPTIME}
+
+Device service name: {DISCOVERY.SERVICE.NAME}
+Device service port: {DISCOVERY.SERVICE.PORT}
+Device service status: {DISCOVERY.SERVICE.STATUS}
+Device service uptime: {DISCOVERY.SERVICE.UPTIME}</message>
+                </message_template>
+                <message_template>
+                    <event_source>AUTOREGISTRATION</event_source>
+                    <operation_mode>PROBLEM</operation_mode>
+                    <subject>Autoregistration: {HOST.HOST}</subject>
+                    <message>Host name: {HOST.HOST}
+Host IP: {HOST.IP}
+Agent port: {HOST.PORT}</message>
+                </message_template>
+            </message_templates>
+        </media_type>
+    </media_types>
+</zabbix_export>
