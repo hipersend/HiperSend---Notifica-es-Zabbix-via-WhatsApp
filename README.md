@@ -29,3 +29,12 @@ Template HiperSend - Notificações Zabbix via WhatsApp
 ![alt text](https://raw.githubusercontent.com/hipersend/HiperSend---Notifica-es-Zabbix-via-WhatsApp/main/images/zabbix04.png "Media creation")
 
 ![alt text](https://raw.githubusercontent.com/hipersend/HiperSend---Notifica-es-Zabbix-via-WhatsApp/main/images/zabbix05.png "Media creation")
+
+4. Testar o template
+   Em Zabbix: Administração -> Tipos de mídias :
+
+![alt text](https://raw.githubusercontent.com/hipersend/HiperSend---Notifica-es-Zabbix-via-WhatsApp/main/images/zabbix06.png "Media creation")
+
+![alt text](https://raw.githubusercontent.com/hipersend/HiperSend---Notifica-es-Zabbix-via-WhatsApp/main/images/zabbix07.png "Media creation")
+
+![alt text](https://raw.githubusercontent.com/hipersend/HiperSend---Notifica-es-Zabbix-via-WhatsApp/main/images/zabbix08.png "Media creation")
