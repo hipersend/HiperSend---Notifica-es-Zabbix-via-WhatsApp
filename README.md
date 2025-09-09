@@ -1,40 +1,79 @@
-# HiperSend---Notifica-es-Zabbix-via-WhatsApp
+# HiperSend — Notificações Zabbix via WhatsApp
 
-Template HiperSend - Notificações Zabbix via WhatsApp
+Template HiperSend para envio de notificações do Zabbix diretamente para WhatsApp.
 
-## Funcionalidades
+## Recursos
+- ✅ Envio de mensagens de texto para **contato privado** (número)
+- ✅ Envio de mensagens de texto para **grupo**
+- ✅ Conversão automática **HTML (Zabbix)** → **WhatsApp** (*bold*, _italic_, ```code```, links)
+- ✅ Compatível com **Zabbix 7.2+** (HttpRequest)
+- ✅ Proxy opcional, logs detalhados
 
-- [x] Envio de mensagens de texto para contato privado
-- [x] Envio de mensagens de texto para grupo
-- [x] Simples integração
+---
 
-## Configuração / Instalação
+## Instalação (Zabbix 7.2+)
 
-### Zabbix
+1. Em **Administração → Tipos de mídia → Criar (Script)**.
+2. Cole o conteúdo de [`scripts/hipersend-zabbix7.js`](scripts/hipersend-zabbix7.js).
+3. **Parâmetros** da mídia (exemplos):
+   - `Api` → `api-st2ngxjq9x3arj1vsvzf` *(u)*
+   - `Secret` → `xxxxxxxxxxx` *(p)*
+   - `To` → número `DDI+DDD+numero` **ou** ID de grupo (ex.: `xxxxx-xxxxx@g.us`)
+   - `IsGroup` → `false` (padrão) ou `true`
+   - `Format` → `auto` (padrão) ou `none`
+   - `HTTPProxy` → opcional
+   - `EndpointBase` → opcional (padrão `https://myhs.app`)
+4. Defina o **Javascript script HTTP request timeout interval** conforme sua necessidade.
+5. Clique em **Test** preenchendo `Subject` e `Message`.
 
-1. Baixar o templete deste repositório e extrair.
+### Como funciona
+- **Direto para número**: `POST https://myhs.app/sendMessage` com body `{ u, p, to, msg }`
+- **Grupo**: `POST https://myhs.app/sendMessageGroup` com body `{ u, p, to, msg }`
+- Se `Format=auto`, o script converte HTML gerado pelo Zabbix em formatação WhatsApp:
+  - `<b>`/`<strong>` → `*negrito*`
+  - `<i>`/`<em>` → `_itálico_`
+  - `<code>` → ```` ```monospace``` ````
+  - `<a href>` → `texto (url)` ou `url`
 
-2. Importar o templete.
-   Em Zabbix: Administração -> Tipos de mídias - Importar :
+### Exemplo (teste)
+- `Subject`: `❌<b>INTERFACE DOWN</b>`
+- `Message`: `⚠️<b>ether1</b> <i>down</i>`
+- Saída no WhatsApp (com `Format=auto`):
+  ```
+  ❌*INTERFACE DOWN*
+  ⚠️*ether1* _down_
+  ```
 
-![alt text](https://raw.githubusercontent.com/hipersend/HiperSend---Notifica-es-Zabbix-via-WhatsApp/main/images/zabbix01.png "Media creation")
+---
 
-![alt text](https://raw.githubusercontent.com/hipersend/HiperSend---Notifica-es-Zabbix-via-WhatsApp/main/images/zabbix02.png "Media creation")
+## Mapeamento de campos (Zabbix → HiperSend)
+| Zabbix Param | HiperSend Body |
+|---|---|
+| Api | u |
+| Secret | p |
+| To | to |
+| Subject + "\n" + Message | msg |
 
-![alt text](https://raw.githubusercontent.com/hipersend/HiperSend---Notifica-es-Zabbix-via-WhatsApp/main/images/zabbix03.png "Media creation")
+---
 
-3. Adicionar API e SECRET da instância Hipersend
-   É NECESSÁRIO UMA INSTÂNCIA DO WHATSAPP NA HIPERSEND, CASO NÃO TENHA SOLICITE UMA ATRAVÉS DO LINK: https://www.volarehost.com.br/central/index.php/store/notificacoes-com-whatsapp
+## Envio por GET (opcional)
+Se quiser usar GET (não recomendado para mensagens longas), a API aceita:
+```
+GET https://myhs.app/sendMessage?app=<app>&u=<u>&p=<p>&to=<to>&msg=<msg>
+```
+> O script padrão usa **POST JSON**. GET pode ser adicionado facilmente se houver demanda.
 
-![alt text](https://raw.githubusercontent.com/hipersend/HiperSend---Notifica-es-Zabbix-via-WhatsApp/main/images/zabbix04.png "Media creation")
+---
 
-![alt text](https://raw.githubusercontent.com/hipersend/HiperSend---Notifica-es-Zabbix-via-WhatsApp/main/images/zabbix05.png "Media creation")
+## Troubleshooting
+- **HTTP 400 + `{"message":"nada a fazer"}`**  
+  Verifique nomes dos campos (`u`, `p`, `to`, `msg`), endpoint correto (`/sendMessage` vs `/sendMessageGroup`) e se `to` está no formato certo:
+  - Número: apenas dígitos com DDI+DDD+numero (ex.: `5511999888777`)
+  - Grupo: id completo `...@g.us`
+- **`Sending failed: ...`**  
+  Veja o **Raw response** no “Media type test log”. O script já loga código e corpo.
 
-4. Testar o template
-   Em Zabbix: Administração -> Tipos de mídias :
+---
 
-![alt text](https://raw.githubusercontent.com/hipersend/HiperSend---Notifica-es-Zabbix-via-WhatsApp/main/images/zabbix06.png "Media creation")
-
-![alt text](https://raw.githubusercontent.com/hipersend/HiperSend---Notifica-es-Zabbix-via-WhatsApp/main/images/zabbix07.png "Media creation")
-
-![alt text](https://raw.githubusercontent.com/hipersend/HiperSend---Notifica-es-Zabbix-via-WhatsApp/main/images/zabbix08.png "Media creation")
+## Changelog
+Veja [`CHANGELOG.md`](CHANGELOG.md).
